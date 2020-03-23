@@ -63,14 +63,13 @@ function minify_image(cb){
     cb();
 }
 
-const tsFilesGlob = [
-    "src/**/*.ts",
-    "!./node_modules/**/*.ts"
-];
 function compile_ts_file(cb){
     const tsconfig = require('./src/tsconfig.json');
-    
-    gulp.src(tsFilesGlob)
+    const filesGlob = [
+        "src/**/*.ts",
+        "!./node_modules/**/*.ts"
+    ];
+    gulp.src(filesGlob)
       .pipe(ts(tsconfig.compilerOptions))
       .pipe(gulp.dest('./lib'));
 
@@ -96,20 +95,21 @@ function do_browserify(cb){
 
         cb();
 }
-const compile_and_browserify= gulp.series(compile_ts_file,
-    do_browserify);
+
+function build(cb) {
+    gulp.series(create_project_skeleton, clean,
+        copy_html, minify_image, compile_ts_file,
+        do_browserify
+        )();
+
+    cb();
+}
+
 exports.create_project_skeleton = create_project_skeleton;
 exports.copy_html = copy_html;
 exports.minify_image = minify_image;
 exports.compile_ts_file = compile_ts_file;
 exports.do_browserify= do_browserify;
 exports.clean = clean;
-exports.compile_and_browserify=compile_and_browserify;
-exports.default = gulp.series(clean, create_project_skeleton,
-    copy_html, minify_image, compile_and_browserify
-    );
 
-exports.watch = gulp.task('watch',()=>{
-    gulp.watch([...htmlPaths],copy_html);
-    gulp.watch([...tsFilesGlob], compile_and_browserify);
-})
+exports.default = build;
